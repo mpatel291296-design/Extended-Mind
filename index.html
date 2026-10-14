@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F2F2F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151514" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pocket Mind">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;-webkit-text-size-adjust:100%}img{max-width:100%}[hidden]{display:none!important}</style>
+<script src="platform.js"></script>
+</head>
+<body>
+<title>Pocket Mind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap">
+<style>
+/* Layout: quiet gray ground, one warm orb where you act. Arctic single-idea desk. Color only as meaning in the weekly mirror. */
+:root{
+  --ground:#F2F2F0; --surface:#FFFFFF; --ink:#1E1E1C; --muted:#62625D; --rule:#E2E1DC; --halo:#E6E4DF;
+  --warm:#E85A22; --warm-ink:#FFFFFF; --warm-soft:#FBE7DD; --danger:#B23A1F;
+  --font:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#151514; --surface:#1F1F1D; --ink:#EDEDEA; --muted:#A5A59E; --rule:#30302D; --halo:#262624;
+  --warm:#FF7A45; --warm-ink:#1A0C05; --warm-soft:#3A2218; --danger:#F08C72; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:#151514; --surface:#1F1F1D; --ink:#EDEDEA; --muted:#A5A59E; --rule:#30302D; --halo:#262624;
+  --warm:#FF7A45; --warm-ink:#1A0C05; --warm-soft:#3A2218; --danger:#F08C72; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;font-weight:400}
+.wrap{max-width:520px;margin:0 auto;padding-inline:20px;padding-block:18px 110px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:18px}
+.top b{font-weight:600;font-size:17px;letter-spacing:.01em}
+.small{font-size:13px;color:var(--muted)}
+.eyebrow{font-size:12px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+h2{font-weight:500;font-size:20px;margin:0;text-wrap:balance}
+.section{display:flex;flex-direction:column;gap:12px;margin-bottom:30px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.hint{color:var(--muted);font-size:14px;margin:0}
+.err{color:var(--danger);font-size:14px;margin:0}
+textarea,input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--rule);border-radius:16px;padding:14px 16px}
+textarea{font-size:17px;line-height:1.5;min-height:96px;resize:vertical}
+textarea:focus,input:focus,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--warm);outline-offset:2px}
+button{font:inherit;font-size:14px;cursor:pointer;border-radius:12px;border:1px solid var(--rule);background:var(--surface);color:var(--ink);padding:10px 14px;min-height:44px}
+button.warm{background:var(--warm);border-color:var(--warm);color:var(--warm-ink);font-weight:500}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+button:disabled{opacity:.5;cursor:default}
+/* dump */
+.ask-line{font-weight:300;font-size:30px;line-height:1.2;text-align:center;margin:6px auto 0;max-width:320px;text-wrap:balance}
+.orb-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;margin:8px 0 4px}
+.orb{width:124px;height:124px;border-radius:50%;border:0;background:var(--warm);color:var(--warm-ink);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 14px var(--halo);padding:0}
+.orb svg{width:38px;height:38px}
+.orb-label{font-weight:500;font-size:15px}
+.modes{display:flex;justify-content:center;gap:6px}
+.modes button{border:0;background:transparent;color:var(--muted);min-height:40px;padding:8px 12px}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+#pending{flex-wrap:nowrap;overflow-x:auto;align-items:center}
+#pending .thumb{width:52px;height:52px;flex:none}
+#pending .thumb button{min-width:26px;min-height:26px;font-size:15px;line-height:1}
+#pendingInfo{font-size:14px;color:var(--muted)}
+#dropBar{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));padding:10px 16px;background:var(--ground);border-top:1px solid var(--rule);z-index:6;display:flex;justify-content:center}
+#dropBar button{width:100%;max-width:488px;min-height:52px;font-size:16px;border-radius:16px}
+body.has-drop .wrap{padding-bottom:190px}
+body.has-drop .toast{bottom:calc(146px + env(safe-area-inset-bottom,0px))}
+@media (max-width:360px){#today{display:none}.top b{font-size:16px}}
+.thumb{position:relative;width:72px;height:72px;border-radius:12px;overflow:hidden;background:var(--surface);border:1px solid var(--rule)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb button{position:absolute;top:3px;right:3px;min-height:0;padding:0 7px;font-size:12px;line-height:20px;border-radius:8px}
+/* cards */
+.card{background:var(--surface);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0;cursor:pointer}
+.card .meta{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.card .text{margin:0;font-size:17px;line-height:1.45;overflow-wrap:anywhere}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.acts button{min-height:44px;padding:8px 14px}
+.tag{font-size:12px;color:var(--muted)}
+.tag.warm{color:var(--warm)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:1px}
+.list{display:flex;flex-direction:column;gap:10px}
+.empty{border:1px dashed var(--rule);border-radius:16px;padding:18px;color:var(--muted);font-size:15px}
+/* desk focus (Arctic) */
+.focus{background:var(--surface);border-radius:20px;padding:28px 24px 22px;display:flex;flex-direction:column;gap:20px;min-height:340px;justify-content:space-between}
+.focus .bar{width:28px;height:4px;background:var(--warm)}
+.focus p.big{margin:0;font-size:31px;line-height:1.18;font-weight:500;letter-spacing:-.01em;overflow-wrap:anywhere}
+.pager{display:flex;justify-content:space-between;align-items:center}
+.mini{display:flex;flex-direction:column}
+.mini button{text-align:left;border:0;border-bottom:1px solid var(--rule);border-radius:0;background:transparent;padding:12px 2px;font-size:15px;display:flex;justify-content:space-between;gap:10px}
+.mini button[aria-current=true]{color:var(--warm)}
+/* weekly mirror (Area Hues) */
+.mirror{background:var(--surface);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.bars{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px;align-items:end;height:90px}
+.bars div{border-radius:3px;min-height:4px}
+.barlabels{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px}
+.barlabels span{font-size:10px;text-align:center;color:var(--muted)}
+.areas{display:flex;gap:6px;flex-wrap:wrap}
+.areas button{min-height:44px;padding:6px 12px;border-radius:99px;font-size:13px}
+.areas button[aria-pressed=true]{border-color:var(--ink)}
+/* ask */
+.answer{font-size:17px;line-height:1.6;white-space:pre-wrap;margin:0}
+sup.ref button{min-height:0;padding:0 5px;border:0;border-radius:6px;background:var(--warm-soft);color:var(--warm);font-size:11px}
+/* chrome */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--rule);padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;z-index:5}
+nav.tabs .in{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:100%;max-width:520px}
+nav.tabs button{border:0;background:transparent;color:var(--muted);font-size:13px;padding:10px 2px;min-height:46px;border-radius:10px}
+nav.tabs button[aria-current=page]{color:var(--ink);font-weight:500;background:var(--ground)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--ground);padding:10px 16px;border-radius:12px;font-size:14px;z-index:9;max-width:calc(100% - 32px)}
+.sheet-bg{position:fixed;inset:0;background:rgba(10,10,10,.45);z-index:8;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--ground);width:100%;max-width:520px;max-height:88%;overflow:auto;border-radius:20px 20px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+canvas#pad{width:100%;height:320px;background:#FFFFFF;border:1px solid var(--rule);border-radius:12px;touch-action:none;display:block}
+@media (prefers-reduced-motion:no-preference){.orb{transition:transform .12s}.orb:active{transform:scale(.96)}}
+</style>
+
+<div class="wrap">
+  <div class="top"><b>Pocket Mind</b><span class="row" style="gap:4px"><span class="small" id="today">opening…</span><button class="ghost" id="btnStatus" type="button" style="min-height:44px;padding:6px 10px"><span id="statusDot" class="dot" style="background:var(--muted)"></span>Status</button></span></div>
+  <div class="card" id="offline" hidden style="cursor:default;border:1px solid var(--warm)"><p class="text" id="offlineText" style="font-size:15px"></p><div class="acts"><button type="button" class="warm" id="btnOfflineStatus">See what's wrong</button></div></div>
+
+  <main id="v-dump">
+    <div class="section">
+      <p class="ask-line">What is on your mind right now?</p>
+      <label for="dumpText" class="eyebrow" style="position:absolute;left:-9999px">Dump anything</label>
+      <textarea id="dumpText" placeholder="Talk or type. Half thoughts are fine."></textarea>
+      <div class="spread" id="pendingInfo" hidden><span id="pendingCount"></span><button type="button" class="ghost" id="btnClearAll">Clear all</button></div>
+      <div class="thumbs" id="pending"></div>
+      <div class="orb-wrap">
+        <button class="orb" id="btnOrb" type="button" aria-label="Talk or type a thought">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+        </button>
+        <span class="orb-label" id="orbLabel">Tap, then use your keyboard mic</span>
+      </div>
+      <div class="modes" id="attachRow">
+        <input type="file" id="filePick" accept="image/*,application/pdf,text/plain,text/markdown,text/csv,application/json,.md,.csv,.txt,.json,.pdf" multiple hidden>
+        <button id="btnPhoto" type="button">Photos, screenshots, files</button>
+        <button id="btnDoodle" type="button">Doodle</button>
+      </div>
+      <p class="err" id="dumpErr" role="alert" hidden></p>
+    </div>
+    <div class="section">
+      <div class="spread"><h2>Just caught</h2><span class="small" id="inboxCount"></span></div>
+      <div class="list" id="job" aria-live="polite"></div>
+      <div class="list" id="inbox"></div>
+    </div>
+  </main>
+
+  <main id="v-desk" hidden>
+    <div class="section">
+      <div class="spread"><h2>Desk</h2><span class="small" id="deskCount"></span></div>
+      <div id="deskFocus"></div>
+      <div class="mini" id="deskMini"></div>
+    </div>
+    <div class="section" id="risingWrap" hidden>
+      <div class="spread"><h2>Rising</h2><span class="small">from the last sleep pass</span></div>
+      <div class="list" id="rising"></div>
+    </div>
+  </main>
+
+  <main id="v-sparks" hidden>
+    <div class="section">
+      <div class="spread"><h2>Sparks</h2><span class="small" id="sparkCount"></span></div>
+      <p class="hint">Connections, loops that need a decision, and one hard question. Eight at most.</p>
+      <div class="row"><button id="btnSleep" type="button">Run sleep pass</button><span class="small" id="sleepStatus"></span></div>
+      <div class="list" id="sparks"></div>
+    </div>
+  </main>
+
+  <main id="v-mind" hidden>
+    <div class="section">
+      <div class="mirror" id="mirror">
+        <div class="spread"><span class="eyebrow">Last 7 days</span><span class="small" id="mirrorTotal"></span></div>
+        <div class="bars" id="bars" aria-hidden="true"></div>
+        <div class="barlabels" id="barLabels" aria-hidden="true"></div>
+        <p class="hint" id="mirrorLine"></p>
+      </div>
+      <input type="search" id="search" placeholder="Search everything you ever dumped" aria-label="Search">
+      <div class="areas" id="areas"></div>
+      <div class="spread"><h2 id="mindTitle">Strongest right now</h2><button class="ghost" id="btnVault" type="button" aria-pressed="false">Open vault</button></div>
+      <div class="list" id="mindList"></div>
+    </div>
+  </main>
+
+  <main id="v-ask" hidden>
+    <div class="section">
+      <label for="askText" class="eyebrow">Ask your own mind</label>
+      <textarea id="askText" style="min-height:84px" placeholder="What do I keep circling about health? Which work ideas keep coming back?"></textarea>
+      <div class="row" style="justify-content:flex-end"><button class="ghost" id="btnStop" type="button" hidden>Stop</button><button class="warm" id="btnAsk" type="button">Ask</button></div>
+      <p class="err" id="askErr" role="alert" hidden></p>
+      <div class="card" id="answerCard" hidden style="cursor:default">
+        <p class="answer" id="answer"></p>
+        <div class="acts"><button id="btnSaveAnswer" type="button">Keep as idea</button></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="tabs" aria-label="Drawers"><div class="in">
+  <button data-v="dump" aria-current="page">Dump</button>
+  <button data-v="desk">Desk</button>
+  <button data-v="sparks">Sparks</button>
+  <button data-v="mind">Mind</button>
+  <button data-v="ask">Ask</button>
+</div></nav>
+
+<div id="dropBar" hidden><button type="button" class="warm" id="btnDropBar">Drop it in</button></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="sheetBg" class="sheet-bg" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+const AREAS=["Health","Food","Sleep","Movement","Mind","Family","People","Work","Money","Learning","Home","Meaning"];
+const HUE={Health:"#E0533D",Food:"#E8902C",Sleep:"#5B6CD8",Movement:"#2FA36B",Mind:"#9156C9",Family:"#D9488C",People:"#D4A417",Work:"#2E7FC4",Money:"#3E9E9A",Learning:"#7A8F2A",Home:"#A0714B",Meaning:"#7C7C82"};
+const TYPES=["idea","worry","decision","plan","question","fact","feeling","observation","insight"];
+const DESK_MAX=10, SPARK_MAX=8, INBOX_SHOW=3, DAY=86400000, MAX_ATTACH=100;
+let db=null,user=null,sample=null,assets=null,imgLimits=null,uid=null,root=null,ideasCol,dumpsCol,sparksCol,busyMsg="",job=null,logs=[],lastError="",diag={},perms=null,dumps=[];
+let ideas=[],sparks=[],meta={},pending=[],view="dump",areaFilter=null,vaultOpen=false,vaultDumps=[],askCtl=null,lastAnswer="",deskIdx=0,busyDump=false;
+const $=s=>document.querySelector(s);
+function el(t,a={},...kids){const n=document.createElement(t);for(const[k,v]of Object.entries(a)){if(k==="class")n.className=v;else if(k.startsWith("on"))n.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)n.setAttribute(k,v===true?"":v)}for(const c of kids.flat()){if(c==null||c===false)continue;n.append(c.nodeType?c:document.createTextNode(String(c)))}return n}
+function toast(msg,ms=2600){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,ms)}
+function showErr(id,msg){const e=$(id);e.textContent=msg||"";e.hidden=!msg}
+function ago(ts){const ms=Date.now()-ts;if(ms<3600000)return"just now";if(ms<DAY)return Math.floor(ms/3600000)+"h ago";const d=Math.floor(ms/DAY);return d===1?"yesterday":d<30?d+"d ago":new Date(ts).toLocaleDateString(undefined,{month:"short",day:"numeric"})}
+function weight(i){
+  const days=Math.max(0,(Date.now()-(i.touched||i.ts))/DAY);
+  const rec=Math.pow(.5,days/21), rep=Math.min(1,(i.repeats||0)/4);
+  const act=Math.min(1,(i.status==="desk"?.5:i.status==="kept"?.25:0)+(i.touches||0)*.1);
+  const emo=Math.max(0,((i.energy||3)-1)/4), lk=Math.min(1,(i.links||[]).length/4);
+  let w=.30*rec+.25*rep+.20*act+.15*emo+.10*lk; if(i.status==="vault")w*=.3; return w}
+const live=()=>ideas.filter(i=>i.status!=="vault");
+const byW=a=>[...a].sort((x,y)=>weight(y)-weight(x));
+const find=id=>ideas.find(i=>i.id===id);
+const refId=(map,r)=>map[String(r).replace(/[\[\]\s]/g,"")];
+function errCopy(e){const c=e&&e.code;return c==="not_granted"?"Claude access was declined for this page. Reload to be asked again.":c==="rate_limited"?"Claude is busy or your usage limit is reached. Try again in a bit.":c==="refused"?"Claude declined that one. Try rewording it.":c==="session_expired"?"Sign in to Claude again, then retry.":c==="timeout"?"Claude took too long on that one.":c==="image_rejected"?"Claude could not open some of those images.":"Claude could not finish. Your words are saved as written."}
+function assetURL(id){return window.PM_PLATFORM&&window.PM_PLATFORM.assetURL?window.PM_PLATFORM.assetURL(id):"/_blob/"+id}
+function assetImg(id,attrs={}){const img=el("img",{alt:"Attachment",loading:"lazy",...attrs});Promise.resolve(assetURL(id)).then(u=>{if(u)img.src=u}).catch(()=>{});return img}
+function assetLink(id,child){const a=el("a",{target:"_blank",rel:"noopener"},child);Promise.resolve(assetURL(id)).then(u=>{if(u)a.href=u}).catch(()=>{});return a}
+function areaTag(a){return el("span",{class:"tag"},el("span",{class:"dot",style:"background:"+(HUE[a]||"#888")}),a)}
+
+/* ---------- navigation ---------- */
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.v)));
+function go(v){view=v;document.querySelectorAll("nav.tabs button").forEach(b=>{if(b.dataset.v===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+  ["dump","desk","sparks","mind","ask"].forEach(n=>$("#v-"+n).hidden=n!==v);renderNow();window.scrollTo(0,0)}
+
+function ideaCard(i,actions=[]){
+  const meta=el("div",{class:"meta"},el("span",{class:"tag"+(i.repeats?" warm":"")},(i.type||"note")+" · "+ago(i.ts)+(i.repeats?" · came back ×"+i.repeats:"")),el("span",{class:"row",style:"gap:10px"},(i.areas||[]).map(areaTag)));
+  const ids=i.assetIds||[];
+  const imgs=ids.length?el("div",{class:"thumbs"},ids.slice(0,6).map(a=>el("div",{class:"thumb"},assetImg(a))),ids.length>6?el("div",{class:"thumb",style:"display:flex;align-items:center;justify-content:center;font-weight:500"},"+"+(ids.length-6)):null):null;
+  return el("article",{class:"card",tabindex:"0",onclick:()=>openIdea(i.id),onkeydown:e=>{if(e.key==="Enter")openIdea(i.id)}},meta,el("p",{class:"text"},i.text),imgs,
+    actions.length?el("div",{class:"acts"},actions.map(([l,f,c])=>el("button",{type:"button",class:c||"",onclick:e=>{e.stopPropagation();f()}},l))):null)}
+
+function render(){if(render._q)return;render._q=(window.requestAnimationFrame||setTimeout)(()=>{render._q=0;renderNow()})}
+function renderNow(){
+  if(uid){const t=new Date().toDateString();$("#today").textContent=ideas.filter(i=>new Date(i.ts).toDateString()===t).length+" caught today"}
+  updateOrb();
+  if(view==="dump")renderInbox(); if(view==="desk")renderDesk(); if(view==="sparks")renderSparks(); if(view==="mind")renderMind();
+}
+function renderInbox(){
+  const inbox=ideas.filter(i=>i.status==="inbox").sort((a,b)=>b.ts-a.ts),box=$("#inbox");
+  $("#inboxCount").textContent=inbox.length?inbox.length+" to sort":"";box.replaceChildren();renderJob();
+  if(!inbox.length&&(job||$("#job").children.length))return;
+  if(!inbox.length){box.append(el("div",{class:"empty"},"Nothing to sort. Each dump is cleaned into single ideas and lands here for a quick keep, desk or let go."));return}
+  inbox.slice(0,INBOX_SHOW).forEach(i=>box.append(ideaCard(i,[["Keep",()=>setStatus(i.id,"kept")],["To desk",()=>setStatus(i.id,"desk"),"warm"],["Let go",()=>setStatus(i.id,"vault"),"ghost"]])));
+  if(inbox.length>INBOX_SHOW)box.append(el("p",{class:"hint"},(inbox.length-INBOX_SHOW)+" more after these."));
+}
+function renderDesk(){
+  const desk=byW(ideas.filter(i=>i.status==="desk")),f=$("#deskFocus"),m=$("#deskMini");
+  $("#deskCount").textContent=desk.length+" of "+DESK_MAX;f.replaceChildren();m.replaceChildren();
+  if(!desk.length){f.append(el("div",{class:"empty"},"Your desk is clear. Send ideas here from Just caught, Mind or Sparks."))}
+  else{
+    deskIdx=((deskIdx%desk.length)+desk.length)%desk.length;const i=desk[deskIdx];
+    f.append(el("div",{class:"focus"},
+      el("div",{class:"bar"}),
+      el("p",{class:"big",tabindex:"0",style:"cursor:pointer",onclick:()=>openIdea(i.id),onkeydown:e=>{if(e.key==="Enter")openIdea(i.id)}},i.text),
+      el("span",{class:"small"},[(i.areas||[]).join(" · "),i.type,"first caught "+ago(i.ts),i.repeats?"came back ×"+i.repeats:null].filter(Boolean).join(" · ")),
+      el("div",{class:"acts"},el("button",{type:"button",class:"warm",onclick:()=>setStatus(i.id,"kept")},"Done for now"),el("button",{type:"button",onclick:()=>setStatus(i.id,"vault")},"Let go")),
+      el("div",{class:"pager"},el("button",{type:"button",class:"ghost","aria-label":"Previous idea",onclick:()=>{deskIdx--;renderDesk()}},"← Prev"),el("span",{class:"small"},(deskIdx+1)+" of "+desk.length),el("button",{type:"button",class:"ghost","aria-label":"Next idea",onclick:()=>{deskIdx++;renderDesk()}},"Next →"))));
+    if(desk.length>1)desk.forEach((d,k)=>m.append(el("button",{type:"button","aria-current":k===deskIdx?"true":"false",onclick:()=>{deskIdx=k;renderDesk()}},el("span",{},d.text.length>60?d.text.slice(0,60)+"…":d.text),el("span",{class:"small"},(d.areas||[])[0]||""))));
+  }
+  const rising=(meta.rising||[]).map(find).filter(i=>i&&i.status!=="desk"&&i.status!=="vault").slice(0,3);
+  $("#risingWrap").hidden=!rising.length||desk.length>=DESK_MAX;const r=$("#rising");r.replaceChildren();
+  rising.forEach(i=>r.append(ideaCard(i,[["Put on desk",()=>setStatus(i.id,"desk"),"warm"]])));
+}
+function renderSparks(){
+  const open=sparks.filter(s=>s.status==="open").sort((a,b)=>b.ts-a.ts).slice(0,SPARK_MAX),box=$("#sparks");
+  $("#sparkCount").textContent=open.length+" of "+SPARK_MAX;
+  $("#sleepStatus").textContent=meta.lastSleep?"last pass "+ago(meta.lastSleep):"never run";
+  box.replaceChildren();
+  if(!open.length)box.append(el("div",{class:"empty"},"No sparks yet. Keep about ten ideas, then run a sleep pass. Once a day is plenty."));
+  open.forEach(s=>{
+    const refs=(s.ideas||[]).map(find).filter(Boolean);
+    box.append(el("article",{class:"card",style:"cursor:default"},
+      el("div",{class:"meta"},el("span",{class:"tag warm"},(s.kind||"spark")+" · "+ago(s.ts))),
+      el("p",{class:"text",style:"font-size:19px;font-weight:500"},s.text),
+      refs.length?el("div",{class:"row",style:"gap:6px"},refs.map(i=>el("button",{type:"button",style:"min-height:34px;padding:4px 10px;font-size:13px",onclick:()=>openIdea(i.id)},i.text.slice(0,32)+(i.text.length>32?"…":"")))):null,
+      el("div",{class:"acts"},el("button",{type:"button",class:"warm",onclick:()=>keepSpark(s)},"Keep"),el("button",{type:"button",class:"ghost",onclick:()=>sparkStatus(s.id,"dismissed")},"Not useful"))))});
+}
+function weekCounts(){const since=Date.now()-7*DAY,c=Object.fromEntries(AREAS.map(a=>[a,0]));ideas.filter(i=>i.ts>=since).forEach(i=>(i.areas||[]).forEach(a=>{if(a in c)c[a]++}));return c}
+function renderMind(){
+  const c=weekCounts(),max=Math.max(1,...Object.values(c)),total=Object.values(c).reduce((a,b)=>a+b,0);
+  $("#bars").replaceChildren(...AREAS.map(a=>el("div",{title:a+": "+c[a],style:"height:"+Math.max(4,Math.round(c[a]/max*86))+"px;background:"+(c[a]?HUE[a]:"var(--rule)")})));
+  $("#barLabels").replaceChildren(...AREAS.map(a=>el("span",{},a.slice(0,3))));
+  $("#mirrorTotal").textContent=total+" tags";
+  const ranked=AREAS.filter(a=>c[a]).sort((a,b)=>c[b]-c[a]),quiet=AREAS.filter(a=>!c[a]);
+  $("#mirrorLine").textContent=!total?"Your week will show here after a few dumps.":ranked.slice(0,2).join(" and ")+(ranked.length>1?" filled":" filled")+" your week."+(quiet.length&&quiet.length<12?" Quiet: "+quiet.slice(0,4).join(", ")+(quiet.length>4?" and more.":"."):"");
+  const q=$("#search").value.trim().toLowerCase(),pool=vaultOpen?ideas.filter(i=>i.status==="vault"):live();
+  const ab=$("#areas");ab.replaceChildren();
+  AREAS.forEach(a=>{const n=live().filter(i=>(i.areas||[]).includes(a)).length;if(!n&&areaFilter!==a)return;
+    ab.append(el("button",{type:"button","aria-pressed":areaFilter===a?"true":"false",onclick:()=>{areaFilter=areaFilter===a?null:a;renderMind()}},el("span",{class:"dot",style:"background:"+HUE[a]}),a+" "+n))});
+  let list=pool;if(areaFilter)list=list.filter(i=>(i.areas||[]).includes(areaFilter));
+  if(q)list=list.filter(i=>(i.text+" "+(i.themes||[]).join(" ")+" "+(i.areas||[]).join(" ")).toLowerCase().includes(q));
+  list=byW(list);
+  $("#mindTitle").textContent=vaultOpen?"Vault":areaFilter||(q?"Matches":"Strongest right now");
+  $("#btnVault").textContent=vaultOpen?"Close vault":"Open vault";$("#btnVault").setAttribute("aria-pressed",String(vaultOpen));
+  const box=$("#mindList");box.replaceChildren();
+  if(!list.length&&!(vaultOpen&&vaultDumps.length))box.append(el("div",{class:"empty"},vaultOpen?"Ideas you let go rest here, still searchable.":"Nothing here yet."));
+  const cap=q||areaFilter||vaultOpen?60:12;
+  if(list.length>cap)$("#mindTitle").textContent+=" · top "+cap+" of "+list.length;
+  list.slice(0,cap).forEach(i=>box.append(ideaCard(i,i.status==="vault"?[["Bring back",()=>setStatus(i.id,"kept")]]:i.status==="desk"?[]:[["To desk",()=>setStatus(i.id,"desk")]])));
+  if(vaultOpen&&vaultDumps.length){box.append(el("h2",{style:"margin-top:12px"},"Raw dumps"));
+    vaultDumps.forEach(d=>box.append(el("article",{class:"card",style:"cursor:default"},el("span",{class:"tag"},"raw · "+ago(d.ts)),el("p",{class:"text",style:"color:var(--muted);font-size:15px"},d.text||"(image only)"))))}
+}
+$("#search").addEventListener("input",()=>renderMind());
+$("#btnVault").addEventListener("click",async()=>{vaultOpen=!vaultOpen;if(vaultOpen&&dumpsCol){try{const s=await dumpsCol.orderBy("ts","desc").limit(60).get();vaultDumps=s.docs.map(d=>({id:d.id,...d.data()}))}catch(e){vaultDumps=[]}}renderMind()});
+
+/* ---------- writes ---------- */
+async function setStatus(id,status){
+  if(!ideasCol)return;
+  if(status==="desk"&&ideas.filter(i=>i.status==="desk"&&i.id!==id).length>=DESK_MAX){toast("Desk is full at "+DESK_MAX+". Clear one first.");return}
+  try{await ideasCol.doc(id).update({status,touched:Date.now()});toast(status==="desk"?"On your desk":status==="vault"?"Moved to vault":"Kept in mind")}catch(e){toast("Could not save that change.")}
+}
+async function sparkStatus(id,status){try{await sparksCol.doc(id).update({status})}catch(e){toast("Could not save that change.")}}
+async function keepSpark(s){
+  const linked=(s.ideas||[]).map(find).filter(Boolean),now=Date.now();
+  try{await ideasCol.doc().set({text:s.text,type:"insight",areas:[...new Set(linked.flatMap(i=>i.areas||[]))].slice(0,3),themes:[],energy:3,status:"kept",ts:now,touched:now,touches:1,repeats:0,links:linked.map(i=>i.id),assetIds:[]});
+    await sparksCol.doc(s.id).update({status:"kept"});toast("Kept as an idea")}catch(e){toast("Could not save that change.")}
+}
+
+/* ---------- dump intake ---------- */
+function updateOrb(){const has=$("#dumpText").value.trim()||pending.length;
+  const label=busyDump?"Catching…":pending.length>1?"Drop in "+pending.length+" files":pending.length?"Drop in 1 file":has?"Drop it in":"Tap, then use your keyboard mic";$("#orbLabel").textContent=label;
+  const showBar=view==="dump"&&!!has;$("#dropBar").hidden=!showBar;document.body.classList.toggle("has-drop",showBar);
+  $("#btnDropBar").textContent=busyDump?"Wait, still catching the last dump…":label;$("#btnDropBar").disabled=busyDump;$("#btnOrb").setAttribute("aria-label",has?label:"Start a thought");$("#btnOrb").disabled=busyDump;}
+$("#dumpText").addEventListener("input",()=>{showErr("#dumpErr","");updateOrb()});
+$("#btnOrb").addEventListener("click",()=>{if($("#dumpText").value.trim()||pending.length)submitDump();else $("#dumpText").focus()});
+$("#btnDropBar").addEventListener("click",()=>submitDump());
+["#btnOrb","#btnDropBar"].forEach(s=>$(s).addEventListener("mousedown",e=>e.preventDefault()));
+function renderPending(){
+  const p=$("#pending");p.replaceChildren();const SHOW=4;
+  $("#pendingInfo").hidden=!pending.length;$("#pendingCount").textContent=pending.length+" attached";
+  pending.slice(0,SHOW).forEach(x=>p.append(el("div",{class:"thumb"},
+    x.isImage?el("img",{src:x.url,alt:"Attached image"}):el("span",{style:"display:flex;align-items:center;justify-content:center;height:100%;padding:4px;font-size:10px;text-align:center;overflow-wrap:anywhere;color:var(--muted)"},x.name),
+    el("button",{type:"button","aria-label":"Remove "+x.name,onclick:()=>{if(x.url)URL.revokeObjectURL(x.url);pending.splice(pending.indexOf(x),1);renderPending()}},"×"))));
+  if(pending.length>SHOW)p.append(el("div",{class:"thumb",style:"display:flex;align-items:center;justify-content:center;font-weight:500;font-size:15px"},"+"+(pending.length-SHOW)));
+  updateOrb()}
+$("#btnClearAll").addEventListener("click",()=>{pending.forEach(x=>x.url&&URL.revokeObjectURL(x.url));pending=[];renderPending()});
+const TEXT_EXT=/\.(txt|md|csv|json)$/i;
+function addFile(f,kind){
+  if(!f)return"skip";
+  if(pending.length>=MAX_ATTACH)return"full";
+  const name=f.name||kind, isImage=/^image\//.test(f.type||""), isPdf=f.type==="application/pdf"||/\.pdf$/i.test(name), isText=/^text\//.test(f.type||"")||f.type==="application/json"||TEXT_EXT.test(name);
+  if(!isImage&&!isPdf&&!isText)return"unsupported";
+  pending.push({blob:f,kind:isImage?kind:isPdf?"pdf":"text",isImage,name,url:isImage?URL.createObjectURL(f):null});return"ok"}
+function addFiles(files,kind){
+  const r=[...files].map(f=>addFile(f,kind));renderPending();
+  if(r.includes("full"))toast("Up to "+MAX_ATTACH+" files per dump. Drop these, then add the rest.");
+  else if(r.includes("unsupported"))toast("Some files were skipped. Images, PDFs and text files work.");
+}
+$("#btnPhoto").addEventListener("click",()=>$("#filePick").click());
+$("#filePick").addEventListener("change",e=>{addFiles(e.target.files,"image");e.target.value=""});
+document.addEventListener("paste",e=>{if(view!=="dump")return;const fs=[...(e.clipboardData?.items||[])].filter(it=>it.kind==="file").map(it=>it.getAsFile());if(fs.length){addFiles(fs,"screenshot");e.preventDefault()}});
+let shrinkWorker=null,shrinkSeq=0;const shrinkWaiters=new Map();
+function getShrinkWorker(){
+  if(shrinkWorker!==null)return shrinkWorker;
+  try{if(!window.Worker||!window.OffscreenCanvas)throw 0;
+    const src="self.onmessage=async e=>{const{id,blob,max}=e.data;try{const bm=await createImageBitmap(blob);const s=Math.min(1,max/Math.max(bm.width,bm.height));const w=Math.round(bm.width*s),h=Math.round(bm.height*s);const c=new OffscreenCanvas(w,h);c.getContext('2d').drawImage(bm,0,0,w,h);bm.close();const out=await c.convertToBlob({type:'image/jpeg',quality:0.8});self.postMessage({id,out})}catch(err){self.postMessage({id,err:String(err)})}}";
+    shrinkWorker=new Worker(URL.createObjectURL(new Blob([src],{type:"text/javascript"})));
+    shrinkWorker.onmessage=e=>{const w=shrinkWaiters.get(e.data.id);if(w){shrinkWaiters.delete(e.data.id);w(e.data)}};
+    shrinkWorker.onerror=()=>{shrinkWorker=false};
+  }catch(e){shrinkWorker=false}
+  return shrinkWorker}
+async function shrinkOnPage(blob){
+  try{if(!window.createImageBitmap)return blob;
+    const bm=await createImageBitmap(blob),s=Math.min(1,1400/Math.max(bm.width,bm.height));
+    const c=document.createElement("canvas");c.width=Math.round(bm.width*s);c.height=Math.round(bm.height*s);
+    const x=c.getContext("2d");if(!x)return blob;x.drawImage(bm,0,0,c.width,c.height);
+    const out=await new Promise(r=>c.toBlob(r,"image/jpeg",.8));bm.close&&bm.close();c.width=c.height=0;return out&&out.size<blob.size?out:blob}catch(e){return blob}}
+async function shrink(blob){
+  if(!blob||blob.size<300000||blob.type==="image/gif")return blob;
+  const w=getShrinkWorker();
+  if(w){const id=++shrinkSeq;const r=await new Promise(res=>{shrinkWaiters.set(id,res);w.postMessage({id,blob,max:1400})});
+    if(r.out&&r.out.size<blob.size)return r.out;if(!r.err)return blob}
+  return shrinkOnPage(blob)}
+function typeFor(blob,it){
+  if(it.isImage)return["image/png","image/jpeg","image/webp","image/gif"].includes(blob.type)?blob.type:"image/png";
+  if(it.kind==="pdf")return"application/pdf";
+  const n=it.name.toLowerCase();return n.endsWith(".md")?"text/markdown":n.endsWith(".csv")?"text/csv":n.endsWith(".json")?"application/json":"text/plain"}
+
+function contextList(n){const list=byW(live()).slice(0,n);const map={};const lines=list.map((i,k)=>{map["n"+k]=i.id;return `[n${k}] ${i.type||"note"} | ${(i.areas||[]).join(",")} | ${String(i.text).slice(0,110)}`});return{map,text:lines.join("\n")||"(none yet)"}}
+
+/* ---------- reliability helpers ---------- */
+function withTimeout(p,ms,code="timeout"){let t;return Promise.race([p,new Promise((_,rej)=>{t=setTimeout(()=>rej({code}),ms)})]).finally(()=>clearTimeout(t))}
+async function pool(items,n,fn){let k=0;await Promise.all(Array.from({length:Math.min(n,items.length)},async()=>{while(k<items.length){const i=k++;await fn(items[i],i)}}))}
+const errCode=e=>(e&&(e.code||e.name||e.message))||String(e);
+function log(msg,e){
+  const line=new Date().toLocaleTimeString()+"  "+msg+(e?"  ["+errCode(e)+"]":"");
+  logs.unshift(line);logs.length=Math.min(logs.length,40);try{console.log("[pocket-mind]",line)}catch(_){}
+  if(e)lastError=line;
+  clearTimeout(log._t);log._t=setTimeout(()=>{if(root)root.collection("system").doc("log").set({lines:logs.slice(0,40),diag,at:Date.now()}).catch(()=>{})},1500);
+}
+
+/* ---------- small copies on this phone (IndexedDB). Startup reads keys only, never the photos. ---------- */
+const local={_db:null,
+  open(){if(!this._db)this._db=new Promise((res,rej)=>{try{const r=indexedDB.open("pocket-mind",1);r.onupgradeneeded=()=>r.result.createObjectStore("files");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});return this._db},
+  async req(mode,fn){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction("files",mode);const r=fn(t.objectStore("files"));t.oncomplete=()=>res(r&&"result"in r?r.result:true);t.onerror=t.onabort=()=>rej(t.error)})},
+  async put(e){try{await this.req("readwrite",s=>s.put(e,e.key));return true}catch(err){log("keep copy on phone",err);return false}},
+  async get(k){try{return (await this.req("readonly",s=>s.get(k)))||null}catch(e){return null}},
+  async keys(){try{return (await this.req("readonly",s=>s.getAllKeys()))||[]}catch(e){return[]}},
+  async del(k){try{await this.req("readwrite",s=>s.delete(k))}catch(e){}}
+};
+let localPending=new Map(),localReady=false;
+const keyDump=k=>String(k).split(":")[0];
+async function refreshLocal(){const ks=await local.keys();localPending=new Map();ks.forEach(k=>localPending.set(keyDump(k),(localPending.get(keyDump(k))||0)+1));localReady=true;if(view==="dump")renderJob()}
+
+/* ---------- one pipeline for new dumps, unfinished dumps and re-reads ----------
+   files: [{key?, id?, load(), name, kind, isImage}]  — uploads 2 at a time, reads 4 photos per Claude request, 2 requests in flight. */
+const TAB=Math.random().toString(36).slice(2);
+async function claim(id){try{const r=dumpsCol.doc(id);if(typeof r.acquire!=="function")return true;return (await r.acquire({holder:TAB,ttlMs:600000})).acquired}catch(e){return true}}
+async function runPipeline(dumpRef,d,files,text){
+  const per=imgLimits?.maxCount||0;
+  const ids=[...(d.assetIds||[])],readIds=new Set(d.readIds||[]);let textRead=!!d.textRead||!text;
+  let dirty=false,chain=Promise.resolve(),dels=[],total=0,failed=null;
+  const flush=()=>{chain=chain.then(async()=>{if(!dirty)return;dirty=false;const ks=dels.splice(0);
+    try{await withTimeout(dumpRef.update({assetIds:[...ids],readIds:[...readIds],textRead}),45000);for(const k of ks)await local.del(k)}
+    catch(e){dirty=true;dels.push(...ks);log("save progress",e)}});return chain};
+  const nonImg=files.filter(f=>!f.isImage),imgs=files.filter(f=>f.isImage);
+  const batches=[];if(per)for(let k=0;k<imgs.length;k+=per)batches.push(imgs.slice(k,k+per));
+  job.total=files.length;job.stored=files.filter(f=>f.id).length;job.failed=0;job.readTotal=Math.max(1,batches.length||(text||nonImg.length?1:0));job.readDone=0;job.stage="working";renderJob();
+  async function upload(f){
+    if(f.id){if(f.isImage&&!f.small){const b=await f.load().catch(()=>null);f.small=b&&/^image\//.test(b.type)?b:null}return f.id}
+    let blob=await f.load().catch(()=>null);if(!blob){job.failed++;renderJob();return null}
+    if(f.isImage){try{blob=await withTimeout(shrink(blob),15000)}catch(e){}f.small=blob}
+    if(!assets){f.noStore=true;return null}
+    let id=null,last=null;
+    for(let a=0;a<3&&!id;a++){try{id=(await withTimeout(assets.upload(blob,{type:typeFor(blob,f)}),90000)).id}catch(e){last=e;if(e&&/quota_or_state|unsupported_type|too_large/.test(e.code||""))break;await new Promise(r=>setTimeout(r,1000*(a+1)))}}
+    if(id){f.id=id;ids.push(id);if(f.key)dels.push(f.key);dirty=true;job.stored++;flush()}else{job.failed++;log("could not store "+f.name,last)}
+    renderJob();return id}
+  async function read(batch,withText,extraIds){
+    const part={ts:d.ts,text:withText?text:"",assetIds:[...extraIds,...batch.map(f=>f.id).filter(Boolean)],kinds:batch.map(f=>f.kind)};
+    const blobs=batch.map(f=>f.small).filter(Boolean);
+    if(!part.text&&!blobs.length&&!part.assetIds.length)return;
+    if(!sample||failed||(!part.text&&!blobs.length))await saveRaw(dumpRef,part,null);
+    else{try{total+=await readOne(dumpRef,part,blobs,0,1)}catch(e){failed=failed||e;log("read",e);await saveRaw(dumpRef,part,null)}}
+    batch.forEach(f=>{if(f.id)readIds.add(f.id);f.small=null});extraIds.forEach(id=>readIds.add(id));if(withText)textRead=true;
+    dirty=true;flush();job.readDone++;renderJob()}
+  // text and documents first
+  for(const f of nonImg)await upload(f);
+  const docIds=nonImg.filter(f=>f.id&&!readIds.has(f.id)).map(f=>f.id);
+  const inflight=new Set(),launch=p=>{const q=p.finally(()=>inflight.delete(q));inflight.add(q)};
+  if(!batches.length){
+    for(const f of imgs)await upload(f);
+    const stored=imgs.filter(f=>f.id&&!readIds.has(f.id));
+    if(!textRead||docIds.length)await read([],!textRead,docIds);
+    if(stored.length)await read(stored.map(f=>({...f,small:null})),false,[]);
+  } else {
+    let first=true;
+    for(const b of batches){
+      await pool(b,2,upload);
+      const ok=b.filter(f=>(f.id||f.noStore)&&!(f.id&&readIds.has(f.id)));
+      while(inflight.size>=2)await Promise.race(inflight);
+      launch(read(ok,first&&!textRead,first?docIds:[]));first=false;
+    }
+    if(first&&(!textRead||docIds.length))launch(read([],!textRead,docIds));
+    await Promise.all(inflight);
+  }
+  await flush();await chain;
+  const unstored=files.filter(f=>!f.id&&!f.noStore).length;
+  await dumpRef.update({status:failed?"partial":unstored?"partial":"done",unstored}).catch(()=>{});
+  log("dump finished: "+total+" ideas, "+unstored+" unstored"+(failed?", reading stopped early":""));
+  return{total,failed,unstored};
+}
+
+/* ---------- dump intake ---------- */
+async function submitDump(){
+  if(busyDump){toast("Still catching the last dump. One moment.");return}
+  const text=$("#dumpText").value.trim();
+  if(!text&&!pending.length){showErr("#dumpErr","Write, talk or attach something first.");return}
+  if(!dumpsCol){showErr("#dumpErr","Not connected to storage, so nothing can be saved here. Tap Status at the top to see why.");openStatus();return}
+  busyDump=true;updateOrb();
+  const now=Date.now(),items=pending.slice();
+  const readText=b=>b.text?b.text():new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result));r.onerror=rej;r.readAsText(b)});
+  let fullText=text;
+  for(const it of items.filter(i=>i.kind==="text")){try{fullText+=`\n\n[File: ${it.name}]\n`+(await withTimeout(readText(it.blob),8000)).slice(0,30000)}catch(e){log("read text file "+it.name,e)}}
+  if(fullText.length>120000){fullText=fullText.slice(0,120000);toast("That was very long. The first 120,000 characters are saved.",5000)}
+  const dumpRef=dumpsCol.doc();
+  try{await withTimeout(dumpRef.set({ts:now,text:fullText,assetIds:[],readIds:[],textRead:!fullText,files:items.length,status:"saving"}),30000)}
+  catch(e){log("save dump",e);busyDump=false;updateOrb();showErr("#dumpErr","Could not save ("+errCode(e)+"). Your words and files are still here. Tap Status to check the connection.");return}
+  $("#dumpText").value="";pending.forEach(p=>p.url&&URL.revokeObjectURL(p.url));pending=[];renderPending();
+  log("saved dump with "+items.length+" files");
+  job={dumpId:dumpRef.id,stage:"preparing",prepared:0,total:items.length,stored:0,failed:0,readDone:0,readTotal:0};renderJob();revealJob();
+  // shrink each photo once, keep the small copy on this phone, drop the original from memory
+  const files=[];
+  for(let k=0;k<items.length;k++){const it=items[k];
+    let blob=it.blob;if(it.isImage){try{blob=await withTimeout(shrink(it.blob),15000)}catch(e){}}
+    const key=dumpRef.id+":"+k+":"+(it.isImage?"i":"f");
+    await local.put({key,dumpId:dumpRef.id,index:k,blob,kind:it.kind,name:it.name,isImage:it.isImage});
+    files.push({key,load:async()=>blob,name:it.name,kind:it.kind,isImage:it.isImage});
+    items[k]=null;job.prepared=k+1;renderJob();
+  }
+  await refreshLocal();
+  try{const r=await runPipeline(dumpRef,{ts:now,assetIds:[],readIds:[],textRead:!fullText},files,fullText);finishToast(r)}
+  catch(e){log("process dump",e);toast("Something went wrong, but your dump is saved. It will continue next time you open Pocket Mind.",5000)}
+  finally{busyDump=false;job=null;await refreshLocal();updateOrb();renderInbox();revealInbox()}
+}
+function finishToast(r){
+  const extra=r.unstored?" "+r.unstored+" to retry.":"";
+  toast((r.failed?errCopy(r.failed).replace("Your words are saved as written.","")+" The rest is saved to read later.":r.total===1?"Caught 1 idea.":"Caught "+r.total+" ideas.")+extra,r.failed?5000:extra?3500:2600);
+}
+async function saveRaw(dumpRef,d,note){
+  const n=(d.assetIds||[]).length,t=(d.text||"");
+  try{await ideasCol.doc().set({text:t.length>1500?t.slice(0,1500)+"… (full text in the vault)":t||(n>1?n+" files saved, not read yet":"File saved, not read yet"),type:"note",areas:[],themes:[],energy:3,status:"inbox",ts:d.ts,touched:Date.now(),touches:0,repeats:0,links:[],assetIds:d.assetIds||[],dumpId:dumpRef.id,untagged:true})}
+  catch(e){log("save raw idea",e)}
+  if(note)toast(note,5000);
+}
+const blobLoader=id=>async()=>{if(window.PM_PLATFORM&&window.PM_PLATFORM.assetBlob)return withTimeout(window.PM_PLATFORM.assetBlob(id),60000);const r=await withTimeout(fetch("/_blob/"+id),60000);if(!r.ok)throw new Error("fetch "+r.status);return r.blob()};
+async function continueDump(dm,auto){
+  if(busyDump){if(!auto)toast("Still catching the last dump. One moment.");return}
+  if(!(await claim(dm.id))){if(!auto)toast("Another open copy of Pocket Mind is already finishing this.");return}
+  busyDump=true;updateOrb();
+  try{
+    const snap=await dumpsCol.doc(dm.id).get().catch(()=>null);const d=snap&&snap.exists?{id:dm.id,...snap.data()}:dm;
+    const keys=(await local.keys()).filter(k=>keyDump(k)===d.id).sort((a,b)=>+String(a).split(":")[1]-+String(b).split(":")[1]);
+    const read=new Set(d.readIds||[]);
+    const files=[...(d.assetIds||[]).filter(id=>!read.has(id)).map(id=>({id,load:blobLoader(id),name:"photo",kind:"image",isImage:true})),
+      ...keys.map(k=>{const t=String(k).split(":")[2];return{key:k,load:async()=>{const v=await local.get(k);return v&&v.blob},name:"photo",kind:t==="f"?"file":"image",isImage:t!=="f"}})];
+    job={dumpId:d.id,stage:"working",prepared:0,total:files.length,stored:0,failed:0,readDone:0,readTotal:0};renderJob();
+    log((auto?"auto-continuing":"continuing")+" dump: "+files.length+" files left");
+    const r=await runPipeline(dumpsCol.doc(d.id),d,files,d.text||"");finishToast(r);
+  }catch(e){log("continue dump",e);if(!auto)toast("Could not continue right now. Everything is still saved.")}
+  finally{busyDump=false;job=null;await refreshLocal();updateOrb();renderInbox()}
+}
+async function autoContinue(){
+  await refreshLocal();
+  const todo=dumps.filter(d=>!d.dismissed&&(d.status==="saving"||d.status==="reading"||(localPending.get(d.id)||0)>0));
+  for(const d of todo)await continueDump(d,true);
+}
+async function leaveDump(d,btn){
+  const onPhone=localPending.get(d.id)||0;
+  if(onPhone&&btn.dataset.armed!=="1"){btn.dataset.armed="1";btn.textContent="Tap again to discard "+onPhone+" file"+(onPhone>1?"s":"");setTimeout(()=>{if(btn.isConnected){btn.dataset.armed="";btn.textContent="Leave it"}},5000);return}
+  for(const k of (await local.keys()).filter(k=>keyDump(k)===d.id))await local.del(k);
+  await dumpsCol.doc(d.id).update({dismissed:true,status:"partial"}).catch(()=>{});
+  await refreshLocal();toast("Left as is.")}
+function revealJob(){if(view!=="dump")return;const r=$("#job").getBoundingClientRect();if(r.top>window.innerHeight-140)try{$("#job").scrollIntoView({behavior:"smooth",block:"center"})}catch(e){}}
+function revealInbox(){if(view!=="dump")return;const r=$("#inbox").getBoundingClientRect();if(r.top>window.innerHeight-120)try{$("#inbox").scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}}
+function renderJob(){
+  const box=$("#job");if(!box)return;box.replaceChildren();
+  if(job){
+    const prep=job.stage==="preparing";
+    const pct=prep?(job.total?job.prepared/job.total:1)*15:15+((job.total?job.stored/job.total:1)*0.45+(job.readTotal?job.readDone/job.readTotal:0)*0.4)*100;
+    const head=prep?"Preparing "+job.prepared+" of "+job.total:(job.total?"Stored "+job.stored+" of "+job.total+" · ":"")+"Read "+job.readDone+" of "+job.readTotal;
+    box.append(el("div",{class:"card",style:"cursor:default"},
+      el("div",{class:"meta"},el("span",{class:"tag warm"},head),el("span",{class:"tag"},Math.min(100,Math.round(pct))+"%")),
+      el("div",{style:"height:6px;border-radius:3px;background:var(--rule);overflow:hidden"},el("div",{style:"height:100%;width:"+Math.min(100,Math.round(pct))+"%;background:var(--warm)"})),
+      job.failed?el("p",{class:"err",style:"margin:0"},job.failed+" file"+(job.failed>1?"s":"")+" could not be stored yet. They're kept on this phone to retry."):null,
+      el("p",{class:"hint"},"Your note is saved. New ideas appear below as each batch is read. If you close Pocket Mind, it continues next time you open it.")));
+  }
+  if(!localReady)return;
+  const lostOf=d=>Math.max(0,(d.files||0)-(d.assetIds||[]).length-(localPending.get(d.id)||0));
+  const unfinished=dumps.filter(d=>(!job||job.dumpId!==d.id)&&!d.dismissed&&(d.status==="saving"||d.status==="reading"||(localPending.get(d.id)||0)>0||(d.status!=="saving"&&lostOf(d)>0)));
+  unfinished.forEach(d=>{
+    const onPhone=localPending.get(d.id)||0,lost=lostOf(d),open=d.status==="saving"||d.status==="reading"||onPhone>0;
+    box.append(el("div",{class:"card",style:"cursor:default"},
+      el("span",{class:"tag warm"},"Unfinished dump · "+ago(d.ts)),
+      el("p",{class:"text"},(d.text?d.text.slice(0,120)+(d.text.length>120?"…":""):"")+(d.files?" ("+d.files+" files)":"")),
+      onPhone?el("p",{class:"hint"},onPhone+" file"+(onPhone>1?"s are":" is")+" waiting on this phone."):null,
+      lost&&!busyDump?el("p",{class:"err",style:"margin:0"},lost+" file"+(lost>1?"s":"")+" didn't make it and aren't on this phone. Please attach "+(lost>1?"them":"it")+" again."):null,
+      el("div",{class:"acts"},
+        open?el("button",{type:"button",class:"warm",onclick:()=>continueDump(d)},"Continue"):null,
+        el("button",{type:"button",class:"ghost",onclick:e=>leaveDump(d,e.currentTarget)},"Leave it"))));
+  });
+}
+
+/* ---------- status / diagnostics ---------- */
+function openStatus(){
+  const row=(name,ok,detail)=>el("div",{class:"spread",style:"padding:10px 0;border-bottom:1px solid var(--rule)"},el("span",{},name),el("span",{class:"tag"+(ok?"":" warm")},(ok?"OK":"Problem")+(detail?" · "+detail:"")));
+  const out=el("p",{class:"hint",role:"status","aria-live":"polite"});
+  const runTest=async()=>{out.textContent="Testing…";const t0=Date.now();
+    try{const r=root.collection("system").doc("probe");await withTimeout(r.set({at:t0}),15000);const s=await withTimeout(r.get(),15000);await r.delete();out.textContent=s.exists?"Storage works ("+(Date.now()-t0)+" ms round trip).":"Saved but could not read it back.";log("probe ok")}
+    catch(e){out.textContent="Storage test failed: "+errCode(e);log("probe",e)}};
+  const waiting=[...localPending.values()].reduce((a,b)=>a+b,0);
+  openSheet(el("div",{class:"spread"},el("h2",{},"Status"),el("button",{type:"button",class:"ghost",onclick:closeSheet},"Close")),
+    el("div",{},
+      row("Storage",!!dumpsCol,dumpsCol?"connected":"not available in this view"),
+      row("Your private space",!!uid,uid?"signed in":"no user id"),
+      row("Claude",!!sample&&diag.claude!=="denied",diag.claude||"unknown"),
+      row("Claude can read images",!!imgLimits,imgLimits?imgLimits.maxCount+" per request":"no"),
+      row("File store",!!assets,assets?"ready":"not available"),
+      row("Waiting on this phone",!waiting,waiting?waiting+" file"+(waiting>1?"s":""):"none")),
+    el("div",{class:"acts"},
+      el("button",{type:"button",onclick:runTest,disabled:!root},"Test saving"),
+      window.PM_PLATFORM&&window.PM_PLATFORM.openSettings?el("button",{type:"button",onclick:()=>{closeSheet();window.PM_PLATFORM.openSettings()}},"Settings and sync"):null,
+      diag.claude==="prompt"&&perms?el("button",{type:"button",class:"warm",onclick:async()=>{const r=await perms.request(["sample"]).catch(()=>({}));diag.claude=r.sample||diag.claude;openStatus()}},"Allow Claude now"):null,
+      diag.claude==="denied"&&perms?el("button",{type:"button",onclick:()=>perms.manage().catch(()=>toast("Open the page's Permissions menu to allow Claude."))},"Fix permissions"):null),
+    out,
+    !dumpsCol?el("p",{class:"hint"},"Open Pocket Mind from your artifacts list in the Claude app, or at claude.ai in a browser while signed in. A home-screen shortcut or a copy of the page cannot reach your storage."):null,
+    el("span",{class:"eyebrow"},"Recent activity"),
+    el("pre",{style:"white-space:pre-wrap;font-size:12px;color:var(--muted);margin:0;font-family:ui-monospace,monospace"},logs.slice(0,15).join("\n")||"Nothing yet."));
+}
+async function readOne(dumpRef,d,imgs,part,parts){
+  const ctx=contextList(60),canImg=imgs.length>0;
+  const prompt=`You are the intake layer of a private thinking journal. The owner dumps raw thoughts, often dictated, plus screenshots, photos and doodles. Turn this dump into clean, atomic ideas.
+
+Rules:
+- Remove filler (um, uh, like, you know), false starts and repetition. Keep the owner's own voice and first person. Do not add advice, praise or facts they did not say.
+- One idea per distinct thought. Usually 1-3, never more than 6. Each idea is one or two plain sentences, at most 35 words.
+- type: one of ${TYPES.slice(0,8).join(", ")}.
+- areas: 1-2 from exactly this list: ${AREAS.join(", ")}.
+- themes: 1-3 short lowercase themes (1-2 words each).
+- energy: 1-5, how charged or urgent it sounds (1 calm note, 5 strong emotion or urgency).
+- echoes: refs from EXISTING IDEAS below that this idea repeats, continues or directly answers. Empty if none. Be strict.
+${canImg?`- ${imgs.length} image(s) (${[...new Set(d.kinds)].join(", ")}) are attached. For a screenshot or photo, capture what it shows and why it likely mattered to the owner. For a doodle, interpret the sketch plainly. Group related images into one idea rather than one idea per image.`:""}
+${parts>1?`- This is part ${part+1} of ${parts} of one large dump. Only cover what is in this part.`:""}
+
+EXISTING IDEAS:
+${ctx.text}
+
+DUMP (${new Date(d.ts).toLocaleString()}):
+${d.text||"(no text, images only)"}
+
+Reply with only JSON: {"ideas":[{"text":"...","type":"idea","areas":["Work"],"themes":["pricing"],"energy":3,"echoes":["n4"]}]}`;
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),150000);let out;
+  try{out=await sample.json(prompt,{...(canImg?{images:imgs}:{}),signal:ctl.signal})}
+  catch(e){throw e&&e.code==="cancelled"?{code:"timeout"}:e}
+  finally{clearTimeout(tm)}
+  const list=(Array.isArray(out?.ideas)?out.ideas:Array.isArray(out)?out:[]).filter(x=>x&&String(x.text||"").trim()).slice(0,6);
+  if(!list.length){await saveRaw(dumpRef,d,null);return 0}
+  const now=Date.now(),echoBump={};
+  for(const x of list){
+    const echoes=[...new Set((Array.isArray(x.echoes)?x.echoes:[]).map(r=>refId(ctx.map,r)).filter(Boolean))];
+    const ref=ideasCol.doc();
+    await ref.set({text:String(x.text).trim().slice(0,400),type:TYPES.includes(x.type)?x.type:"idea",
+      areas:[...new Set((Array.isArray(x.areas)?x.areas:[]).filter(a=>AREAS.includes(a)))].slice(0,2),themes:(Array.isArray(x.themes)?x.themes:[]).map(String).slice(0,3),
+      energy:Math.min(5,Math.max(1,Math.round(Number(x.energy))||3)),status:"inbox",ts:d.ts,touched:now,touches:0,repeats:0,links:echoes,assetIds:d.assetIds,dumpId:dumpRef.id});
+    echoes.forEach(id=>(echoBump[id]=echoBump[id]||[]).push(ref.id));
+  }
+  for(const[id,newIds]of Object.entries(echoBump)){const i=find(id);if(!i)continue;
+    try{await ideasCol.doc(id).update({repeats:(i.repeats||0)+1,touched:now,links:[...new Set([...(i.links||[]),...newIds])].slice(-20)})}catch(e){}}
+  return list.length;
+}
+async function rereadIdea(i){
+  if(!sample||busyDump){toast(busyDump?"Still catching the last dump.":"Claude is not available on this view.");return}
+  closeSheet();go("dump");busyDump=true;updateOrb();
+  try{
+    const ref=dumpsCol.doc(i.dumpId||undefined),snap=await ref.get().catch(()=>null),base=snap&&snap.exists?snap.data():{assetIds:[]};
+    await ideasCol.doc(i.id).update({status:"vault",touched:Date.now()});
+    const text=/ saved, not read yet$/.test(i.text)?"":i.text;
+    job={dumpId:ref.id,stage:"working",prepared:0,total:0,stored:0,failed:0,readDone:0,readTotal:0};
+    const r=await runPipeline(ref,{ts:i.ts,assetIds:base.assetIds||[],readIds:[],textRead:!text},(i.assetIds||[]).map(id=>({id,load:blobLoader(id),name:"photo",kind:"image",isImage:true})),text);
+    finishToast(r);
+  }catch(e){log("re-read idea",e);toast("Could not read it right now. It is still saved.")}
+  finally{busyDump=false;job=null;updateOrb();renderInbox()}
+}
+
+/* ---------- doodle ---------- */
+$("#btnDoodle").addEventListener("click",()=>{
+  const c=el("canvas",{id:"pad","aria-label":"Drawing pad"});
+  openSheet(el("h2",{},"Doodle"),c,el("div",{class:"spread"},el("button",{type:"button",class:"ghost",onclick:()=>{const x=c.getContext("2d");x.fillStyle="#FFFFFF";x.fillRect(0,0,c.width,c.height)}},"Clear"),
+    el("div",{class:"row"},el("button",{type:"button",onclick:closeSheet},"Cancel"),el("button",{type:"button",class:"warm",onclick:()=>c.toBlob(b=>{if(b)addFiles([new File([b],"doodle.png",{type:"image/png"})],"doodle");closeSheet()},"image/png")},"Attach doodle"))));
+  requestAnimationFrame(()=>{const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=r.width*dpr;c.height=r.height*dpr;const x=c.getContext("2d");if(!x)return;x.scale(dpr,dpr);x.fillStyle="#FFFFFF";x.fillRect(0,0,r.width,r.height);
+    x.strokeStyle="#1E1E1C";x.lineWidth=2.4;x.lineCap="round";x.lineJoin="round";let on=false;
+    const pt=e=>{const b=c.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+    c.addEventListener("pointerdown",e=>{on=true;c.setPointerCapture?.(e.pointerId);x.beginPath();x.moveTo(...pt(e))});
+    c.addEventListener("pointermove",e=>{if(!on)return;x.lineTo(...pt(e));x.stroke()});
+    ["pointerup","pointercancel"].forEach(t=>c.addEventListener(t,()=>on=false))});
+});
+
+/* ---------- sheet / idea detail ---------- */
+function openSheet(...kids){$("#sheet").replaceChildren(...kids.flat().filter(k=>k!=null&&k!==false));$("#sheetBg").hidden=false}
+function closeSheet(){$("#sheetBg").hidden=true;$("#sheet").replaceChildren()}
+$("#sheetBg").addEventListener("click",e=>{if(e.target.id==="sheetBg")closeSheet()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheetBg").hidden)closeSheet()});
+async function openIdea(id){
+  const i=find(id);if(!i)return;
+  if(Date.now()-(i.touched||0)>3600000&&ideasCol)ideasCol.doc(id).update({touches:(i.touches||0)+1,touched:Date.now()}).catch(()=>{});
+  const ta=el("textarea",{id:"editText","aria-label":"Idea text"});ta.value=i.text;
+  const linked=(i.links||[]).map(find).filter(Boolean),src=el("p",{class:"hint"});
+  const acts=[];
+  if(i.untagged&&sample)acts.push(["Read with Claude",()=>rereadIdea(i),"warm"]);
+  if(i.status!=="desk")acts.push(["To desk",()=>setStatus(id,"desk").then(closeSheet),"warm"]);
+  if(i.status!=="kept")acts.push([i.status==="vault"?"Bring back":"Keep in mind",()=>setStatus(id,"kept").then(closeSheet)]);
+  if(i.status!=="vault")acts.push(["Let go",()=>setStatus(id,"vault").then(closeSheet),"ghost"]);
+  openSheet(el("div",{class:"spread"},el("span",{class:"tag"},(i.type||"note")+" · "+i.status+" · "+new Date(i.ts).toLocaleString()),el("button",{type:"button",class:"ghost",onclick:closeSheet},"Close")),
+    ta,el("div",{class:"row",style:"justify-content:flex-end"},el("button",{type:"button",onclick:async()=>{const t=ta.value.trim();if(!t)return;try{await ideasCol.doc(id).update({text:t.slice(0,600)});toast("Saved")}catch(e){toast("Could not save that change.")}}},"Save wording")),
+    (i.assetIds||[]).length?el("div",{class:"thumbs"},i.assetIds.map(a=>assetLink(a,assetImg(a,{alt:"Attached image",style:"max-height:220px;border-radius:12px"})))):null,
+    el("div",{class:"row",style:"gap:12px"},(i.areas||[]).map(areaTag),(i.themes||[]).map(t=>el("span",{class:"tag"},"#"+t)),el("span",{class:"tag"},"weight "+weight(i).toFixed(2))),
+    linked.length?el("div",{class:"section",style:"margin:0;gap:8px"},el("span",{class:"eyebrow"},"Connected"),el("div",{class:"row",style:"gap:6px"},linked.map(l=>el("button",{type:"button",style:"min-height:34px;padding:4px 10px;font-size:13px",onclick:()=>openIdea(l.id)},l.text.slice(0,40)+(l.text.length>40?"…":""))))):null,
+    src,el("div",{class:"acts"},acts.map(([l,f,c])=>el("button",{type:"button",class:c||"",onclick:f},l))));
+  if(i.dumpId&&dumpsCol){try{const s=await dumpsCol.doc(i.dumpId).get();const t=s.exists&&s.data().text;if(t&&t!==i.text)src.textContent="Your original words: “"+t.slice(0,500)+"”"}catch(e){}}
+}
+
+/* ---------- sleep pass ---------- */
+$("#btnSleep").addEventListener("click",sleepPass);
+async function sleepPass(){
+  const kept=live().filter(i=>i.status!=="inbox");
+  if(kept.length<5){toast("Keep at least 5 ideas first.");return}
+  if(!sample){toast("Claude is not available on this view.");return}
+  const btn=$("#btnSleep");btn.disabled=true;$("#sleepStatus").textContent="sleeping on it… (up to a minute)";
+  const ctx=contextList(120);
+  const recentSparks=sparks.slice(0,12).map(s=>"- "+s.text).join("\n")||"(none)";
+  const prompt=`You are the overnight consolidation pass of a private thinking journal, like sleep for memory. Read the owner's ideas and surface only what is truly worth their attention. Quality over quantity: returning zero sparks is fine.
+
+Spark kinds:
+- connection: two or more ideas from DIFFERENT life areas that inform each other in a way the owner may not have seen.
+- pattern: something that keeps recurring (look at "came back" counts and dates), stated plainly.
+- loop: a worry or question that keeps returning with no decision or action. End with one concrete decision to make.
+- question: one sharp critical-thinking question that challenges an assumption in the ideas.
+Rules: at most 3 sparks; each at most 40 words, plain and specific, citing at least one ref. No praise, no therapy talk, no diagnoses or medical claims, no generic advice. Do not repeat these recent sparks:
+${recentSparks}
+
+Also pick "rising": up to 3 refs of ideas (not already on the desk) that deserve a place on the desk now.
+
+IDEAS ([ref] type | areas | text), strongest first:
+${ctx.text}
+
+Desk now: ${ideas.filter(i=>i.status==="desk").map(i=>"- "+i.text.slice(0,80)).join("\n")||"(empty)"}
+
+Reply with only JSON: {"sparks":[{"kind":"connection","text":"...","ideas":["n3","n17"]}],"rising":["n5"]}`;
+  try{
+    const out=await sample.json(prompt,{cache:false}),now=Date.now();
+    const openBefore=sparks.filter(s=>s.status==="open").sort((a,b)=>b.ts-a.ts);
+    const sp=(Array.isArray(out?.sparks)?out.sparks:[]).filter(s=>s&&String(s.text||"").trim()).slice(0,3);
+    for(const s of sp){const ids=[...new Set((Array.isArray(s.ideas)?s.ideas:[]).map(r=>refId(ctx.map,r)).filter(Boolean))];
+      await sparksCol.doc().set({kind:["connection","pattern","loop","question"].includes(s.kind)?s.kind:"spark",text:String(s.text).trim().slice(0,400),ideas:ids,status:"open",ts:now})}
+    const rising=[...new Set((Array.isArray(out?.rising)?out.rising:[]).map(r=>refId(ctx.map,r)).filter(Boolean))].slice(0,3);
+    await root.set({...meta,lastSleep:now,rising});
+    const over=openBefore.length+sp.length-SPARK_MAX;
+    if(over>0)for(const s of openBefore.slice(-over)){try{await sparksCol.doc(s.id).update({status:"archived"})}catch(e){}}
+    toast(sp.length?sp.length+" new spark"+(sp.length>1?"s":""):"Nothing new worth showing tonight");
+  }catch(e){toast(errCopy(e))}
+  finally{btn.disabled=false;renderSparks()}
+}
+
+/* ---------- ask ---------- */
+$("#btnAsk").addEventListener("click",ask);
+$("#btnStop").addEventListener("click",()=>askCtl?.abort());
+$("#askText").addEventListener("input",()=>showErr("#askErr",""));
+async function ask(){
+  const q=$("#askText").value.trim();
+  if(!q){showErr("#askErr","Type a question first.");return}
+  if(!sample){showErr("#askErr","Claude is not available on this view.");return}
+  if(!ideas.length){showErr("#askErr","Dump a few thoughts first, then ask.");return}
+  const words=q.toLowerCase().split(/\W+/).filter(w=>w.length>3);
+  const scored=live().map(i=>{const hay=(i.text+" "+(i.themes||[]).join(" ")+" "+(i.areas||[]).join(" ")).toLowerCase();return{i,s:words.filter(w=>hay.includes(w)).length*2+weight(i)}}).sort((a,b)=>b.s-a.s).slice(0,90);
+  const map={};const lines=scored.map(({i},k)=>{map["n"+k]=i.id;return `[n${k}] ${new Date(i.ts).toLocaleDateString()} | ${i.type} | ${(i.areas||[]).join(",")} | ${String(i.text).slice(0,160)}`});
+  const prompt=`You answer questions using ONLY the owner's own journal ideas below, like their own memory talking back. Be direct and specific, at most 160 words, plain sentences, no headings. Cite the ideas you use as [n#] right after the sentence. If the notes do not cover it, say so in one line. Where the notes contradict each other or an assumption looks shaky, point it out briefly. No flattery.
+
+IDEAS:
+${lines.join("\n")}
+
+QUESTION: ${q}`;
+  askCtl=new AbortController();$("#btnAsk").disabled=true;$("#btnStop").hidden=false;$("#answerCard").hidden=false;$("#answer").textContent="Thinking…";
+  try{const {text}=await sample(prompt,{signal:askCtl.signal,cache:false,onText:({text})=>{$("#answer").textContent=text}});renderAnswer(text,map)}
+  catch(e){if(e.code!=="cancelled")showErr("#askErr",errCopy(e));$("#answer").textContent=e.text||"";if(!e.text)$("#answerCard").hidden=true}
+  finally{$("#btnAsk").disabled=false;$("#btnStop").hidden=true}
+}
+function renderAnswer(text,map){
+  const out=$("#answer");out.replaceChildren();const order=[];
+  text.split(/(\[n\d+(?:\s*,\s*n\d+)*\])/).forEach(part=>{
+    if(/^\[n\d+/.test(part)){(part.match(/n\d+/g)||[]).forEach(r=>{const id=map[r];if(!id)return;let k=order.indexOf(id);if(k<0){order.push(id);k=order.length-1}
+      out.append(el("sup",{class:"ref"},el("button",{type:"button","aria-label":"Open source idea "+(k+1),onclick:()=>openIdea(id)},k+1)))})}
+    else out.append(document.createTextNode(part))});
+  lastAnswer=text.replace(/\s*\[n\d+(?:\s*,\s*n\d+)*\]/g,"");
+}
+$("#btnSaveAnswer").addEventListener("click",async()=>{if(!lastAnswer||!ideasCol)return;const now=Date.now();
+  try{await ideasCol.doc().set({text:lastAnswer.slice(0,600),type:"insight",areas:[],themes:[],energy:2,status:"kept",ts:now,touched:now,touches:1,repeats:0,links:[],assetIds:[]});toast("Kept as an idea")}catch(e){toast("Could not save that change.")}});
+
+/* ---------- boot ---------- */
+render();
+window.__pm={get ideas(){return ideas},get sparks(){return sparks},get meta(){return meta},weight,submitDump,sleepPass,ask,setStatus,renderAnswer,go};
+(async()=>{
+  const C=window.claude;
+  const dot=ok=>{$("#statusDot").style.background=ok?"#2FA36B":"var(--warm)"};
+  const fail=m=>{$("#offlineText").textContent=m;$("#offline").hidden=false;$("#today").textContent="not connected";dot(false);log("boot: "+m,{code:"boot"})};
+  $("#btnStatus").addEventListener("click",openStatus);$("#btnOfflineStatus").addEventListener("click",openStatus);
+  if(!C||!C.use){fail("This copy of the page can't reach your storage. Open Pocket Mind from your artifacts in the Claude app, or at claude.ai while signed in.");return}
+  [db,user,sample,assets,perms]=await Promise.all(["db","user","sample","assets","permissions"].map(n=>C.use(n).catch(()=>null)));
+  diag={db:!!db,user:!!user,sample:!!sample,assets:!!assets};
+  if(!db||!user){fail("Storage isn't available in this view, so dumps can't be saved. Open Pocket Mind from your artifacts in the Claude app, or at claude.ai while signed in.");return}
+  uid=await user.id().catch(()=>null);
+  if(!uid){fail("Sign in to Claude to use your private mind.");return}
+  root=db.doc(`data/users/${uid}/mind`);ideasCol=root.collection("ideas");dumpsCol=root.collection("dumps");sparksCol=root.collection("sparks");
+  if(sample){try{imgLimits=(await sample.limits())?.images||null}catch(e){imgLimits=null}}
+  if(perms){try{diag.claude=await perms.state("sample")}catch(e){}}
+  dot(true);log("connected · Claude "+(diag.claude||"?")+" · images "+(imgLimits?imgLimits.maxCount+"/request":"no")+" · files "+(assets?"yes":"no"));
+  if(!assets&&!imgLimits)$("#btnPhoto").hidden=true;
+  const onErr=e=>{log("live sync",e);fail("Lost connection to your mind. Reload the page.")};
+  let firstDumps=true;dumpsCol.orderBy("ts","desc").limit(30).onSnapshot(q=>{dumps=q.docs.map(x=>({id:x.id,...x.data()}));if(view==="dump")renderJob();if(firstDumps){firstDumps=false;setTimeout(autoContinue,150)}},onErr);
+  ideasCol.orderBy("ts","desc").limit(1000).onSnapshot(q=>{ideas=q.docs.map(x=>({id:x.id,...x.data()}));render()},onErr);
+  sparksCol.orderBy("ts","desc").limit(60).onSnapshot(q=>{sparks=q.docs.map(x=>({id:x.id,...x.data()}));render()},onErr);
+  root.onSnapshot(s=>{meta=s.exists?{...s.data()}:{};render()},onErr);
+  render();
+})();
+</script>
+
+</body>
+</html>
